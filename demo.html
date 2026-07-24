@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz — Demo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css">
+<style>
+  /* navigation arrows in marine; white on dark slides */
+  .reveal .controls { color: #2C4A6E !important; }
+  .reveal.has-dark-background .controls { color: #fff !important; }
+  /* marine headings */
+  .reveal h1, .reveal h2, .reveal h3 { color: #2C4A6E; }
+  .reveal .lead { color: #6B7B7B; font-size: .7em; }
+</style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <section>
+      <h2>Quiz</h2>
+      <p class="lead">Four interactive exercise types for reveal.js — built for touch and smartboards.<br>Use the arrows to step through single choice, multiple choice, true/false and ordering.</p>
+    </section>
+
+    <section>
+      <h3>Single choice</h3>
+      <div class="quiz" data-type="single">
+        <div class="quiz-q">Which title do graduates of the generalist nursing programme hold?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" data-correct>Registered nurse (Pflegefachperson)</button>
+          <button class="quiz-opt">Nursing assistant</button>
+          <button class="quiz-opt">Care helper</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>Multiple choice</h3>
+      <div class="quiz" data-type="multiple">
+        <div class="quiz-q">Which of these are reserved activities? Select all, then Check.</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" data-correct>Assessing the care need</button>
+          <button class="quiz-opt">Making the beds</button>
+          <button class="quiz-opt" data-correct>Steering the care process</button>
+          <button class="quiz-opt">Serving meals</button>
+          <button class="quiz-opt" data-correct>Securing care quality</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>True / false</h3>
+      <div class="quiz" data-type="truefalse">
+        <div class="quiz-tf-item" data-answer="false">
+          <div class="quiz-q">The training contract is signed with the nursing school.</div>
+        </div>
+        <div class="quiz-tf-item" data-answer="true">
+          <div class="quiz-q">The probation period lasts six months.</div>
+        </div>
+        <div class="quiz-tf-item" data-answer="false">
+          <div class="quiz-q">Theory hours outnumber the hours of practical training.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>Ordering</h3>
+      <p class="lead">Tap a card, then tap another to swap them. Check grades, Reset reshuffles.</p>
+      <div class="quiz" data-type="order">
+        <div class="quiz-options">
+          <button class="quiz-opt" data-order="1">Assess</button>
+          <button class="quiz-opt" data-order="2">Plan</button>
+          <button class="quiz-opt" data-order="3">Implement</button>
+          <button class="quiz-opt" data-order="4">Evaluate</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<footer style="position:fixed;left:0;right:0;bottom:6px;text-align:center;font-size:12px;font-family:system-ui,-apple-system,sans-serif;z-index:40;pointer-events:none;">
+  <a href="https://florianloyns.com/Impressum/" target="_blank" rel="noopener"
+     style="color:#8a99a8;text-decoration:none;pointer-events:auto;">Impressum</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="plugin/quiz/quiz.js"></script>
+<script>
+  Reveal.initialize({ hash: true, plugins: [ RevealQuiz ] });
+</script>
+</body>
+</html>

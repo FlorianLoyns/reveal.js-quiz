@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 280" width="820" height="280" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect x="8" y="8" width="804" height="264" rx="18" fill="#FFFFFF" stroke="#E7EBEF" stroke-width="1.5"/>
+  <text x="40" y="44" font-size="15" font-weight="700" letter-spacing="0.12em" fill="#2C4A6E">QUIZ</text>
+  <text x="40" y="66" font-size="13.5" fill="#6B7B7B">Single choice · multiple choice · true/false · ordering — feedback by colour.</text>
+
+  <text x="40" y="102" font-size="18" font-weight="700" fill="#0B1818">Which title do graduates of the generalist programme hold?</text>
+
+  <!-- correct option (green) -->
+  <rect x="40" y="116" width="730" height="40" rx="12" fill="#F2F7EA" stroke="#639922" stroke-width="1.5"/>
+  <circle cx="66" cy="136" r="13" fill="#639922"/>
+  <text x="66" y="141" text-anchor="middle" font-size="15" font-weight="800" fill="#FFFFFF">&#10003;</text>
+  <text x="92" y="142" font-size="16" fill="#22312f">Registered nurse (Pflegefachperson)</text>
+
+  <!-- wrong option (red) -->
+  <rect x="40" y="164" width="730" height="40" rx="12" fill="#FBEEEE" stroke="#D14A4A" stroke-width="1.5"/>
+  <circle cx="66" cy="184" r="13" fill="#D14A4A"/>
+  <text x="66" y="189" text-anchor="middle" font-size="15" font-weight="800" fill="#FFFFFF">&#10007;</text>
+  <text x="92" y="190" font-size="16" fill="#22312f">Nursing assistant</text>
+
+  <!-- neutral option -->
+  <rect x="40" y="212" width="730" height="40" rx="12" fill="#FFFFFF" stroke="#E7EBEF" stroke-width="1.5"/>
+  <circle cx="66" cy="232" r="12" fill="none" stroke="#E7EBEF" stroke-width="2"/>
+  <text x="92" y="238" font-size="16" fill="#9AA1AB">Care helper</text>
+</svg>
