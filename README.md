@@ -40,7 +40,9 @@ npm install reveal.js-quiz
 
 ## Usage
 
-Every exercise is a `<div class="quiz" data-type="…">`. Feedback is colour only: green = correct, red = wrong, green outline = correct answer that was missed.
+Every exercise is a `<div class="quiz" data-type="…">`. Feedback is colour only: green = correct, red = wrong, green outline = correct answer that was missed (the result is also exposed via `aria-label` for screen readers).
+
+**Reset:** long-press the question (~0.6 s) to reset any exercise — handy when the next group should try the same slide. (Ordering additionally has its Reset button.)
 
 ### Single choice
 
@@ -147,6 +149,17 @@ German labels, for example:
 ```js
 quiz: { checkLabel: 'Prüfen', trueLabel: 'Wahr', falseLabel: 'Falsch', resetLabel: 'Zurücksetzen' }
 ```
+
+## Changelog
+
+**1.1.0**
+
+- Long-press the question (~0.6 s) to reset any exercise type — not just ordering.
+- Multi-statement true/false sizes its stage to the tallest question, so long statements no longer overflow.
+- Results carry an `aria-label` (correct / wrong / missed) alongside the colour.
+- `tfHold: 0` is now respected (no longer falls back to the default).
+
+**1.0.0** — initial release.
 
 ## Like it?
 

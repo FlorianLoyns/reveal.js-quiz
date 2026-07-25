@@ -1,13 +1,12 @@
 /*!
- * reveal.js-quiz 1.0.0
+ * reveal.js-quiz 1.1.0
  * Interactive exercises for reveal.js — single choice, multiple choice,
  * true/false and ordering. Touch / smartboard friendly, ships its own CSS,
- * colours and labels are easy to theme.
+ * colours and labels are easy to theme. Long-press a question to reset it.
  * @author  Florian Loyns
  * @license MIT
  * Companion to touchcontrols and glossary. Docs & options: see README.
  */
-
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -20,10 +19,10 @@
     var css =
       ".reveal .quiz{max-width:840px;margin:0 auto;text-align:left}"
     + ".reveal .quiz-q{font-size:26px;font-weight:700;line-height:1.2;color:#0B1818;margin:0 0 16px}"
-    + ".reveal .quiz-options{display:flex;flex-direction:column;gap:12px}"
-    + ".reveal .quiz-opt{font-family:inherit;text-align:left;font-size:21px;line-height:1.25;color:#22312f;background:#fff;"
-      + "border:1.5px solid " + o.line + ";border-radius:14px;padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:.13s}"
-    + ".reveal .quiz-opt::before{content:'';flex:0 0 auto;width:26px;height:26px;border-radius:50%;border:2px solid " + o.line + ";"
+    + ".reveal .quiz-options{display:flex;flex-direction:column;gap:10px}"
+    + ".reveal .quiz-opt{font-family:inherit;text-align:left;font-size:19px;line-height:1.22;color:#22312f;background:#fff;"
+      + "border:1.5px solid " + o.line + ";border-radius:12px;padding:11px 16px;cursor:pointer;display:flex;align-items:center;gap:13px;transition:.13s}"
+    + ".reveal .quiz-opt::before{content:'';flex:0 0 auto;width:23px;height:23px;border-radius:50%;border:2px solid " + o.line + ";"
       + "display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;transition:.13s}"
     + ".reveal .quiz-opt:hover{border-color:" + o.accent + ";background:rgba(44,74,110,.04)}"
     + ".reveal .quiz-opt.selected{border-color:" + o.accent + ";background:rgba(44,74,110,.06)}"
@@ -39,11 +38,11 @@
     + ".reveal .quiz-tf{flex-direction:row;gap:14px}"
     + ".reveal .quiz-tf .quiz-opt{flex:1;justify-content:center;font-weight:600;font-size:22px}"
     + ".reveal .quiz-tf .quiz-opt::before{display:none}"
-    /* multi true/false: questions stacked, cross-fade without shifting */
+    /* Mehrfach-Wahr/Falsch: Fragen deckungsgleich übereinander, Überblenden ohne Verrutschen */
     + ".reveal .quiz-tf-stage{position:relative;width:840px;max-width:100%;margin:0 auto;min-height:230px}"
     + ".reveal .quiz-tf-item{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;opacity:0;pointer-events:none;transition:opacity .45s ease}"
     + ".reveal .quiz-tf-item.active{opacity:1;pointer-events:auto}"
-    /* order: wrapping grid of cards */
+    /* --- Reihenfolge (order): umbrechendes Raster mit Zieh-Karten --- */
     + ".reveal .quiz-grid{counter-reset:qord;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:12px}"
     + ".reveal .quiz-grid .quiz-opt{counter-increment:qord;flex:0 0 auto;width:auto;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}"
     + ".reveal .quiz-grid .quiz-opt::before{content:counter(qord);border-radius:8px;border:none;background:" + o.accent + ";color:#fff;font-size:15px;font-weight:700}"
@@ -57,6 +56,7 @@
     + ".reveal .quiz-actions button{font-family:inherit;font-size:18px;font-weight:600;padding:9px 20px;border-radius:11px;cursor:pointer;border:1.5px solid " + o.accent + ";background:" + o.accent + ";color:#fff;transition:.12s}"
     + ".reveal .quiz-actions button.ghost{background:transparent;color:" + o.accent + "}"
     + ".reveal .quiz-actions button:active{transform:translateY(1px)}"
+    /* Altbestand: frühere Decks enthalten noch .quiz-feedback-Kästen – bewusst ausgeblendet */
     + ".reveal .quiz-feedback{display:none}";
     var s = document.createElement('style');
     s.id = 'quiz-css'; s.textContent = css;
@@ -64,11 +64,43 @@
   }
 
   function stopP(e){ e.stopPropagation(); }
-  /* keep a tapped button from taking focus, otherwise reveal scroll-nudges
-     the scaled slide and everything appears to shift. */
+  /* verhindert, dass ein angetippter Button den Fokus bekommt – sonst
+     scrollt reveal die skalierte Folie minimal und alles "verzieht" sich. */
   function noFocus(el){ el.addEventListener('mousedown', function(e){ e.preventDefault(); }); }
 
-  /* shuffle without accidentally landing on the already-correct order */
+  /* Ergebnisklasse + aria-label setzen (Farbe allein reicht Screenreadern nicht) */
+  function markResult(opt, kind){
+    opt.classList.add(kind);
+    var lab = kind === 'correct' ? 'richtig'
+            : kind === 'wrong'   ? 'falsch'
+            : 'richtige Antwort – nicht ausgewählt';
+    opt.setAttribute('aria-label', (opt.textContent || '').trim() + ' – ' + lab);
+  }
+  function clearResults(opts){
+    opts.forEach(function(o2){
+      o2.classList.remove('correct', 'wrong', 'missed', 'selected');
+      o2.removeAttribute('aria-label');
+    });
+  }
+
+  /* Langdruck (~0,6 s) auf die Frage setzt die Aufgabe zurück – für die nächste Gruppe */
+  function wireReset(quiz, resetFn){
+    var targets = [].slice.call(quiz.querySelectorAll('.quiz-q'));
+    if (!targets.length) targets = [quiz];
+    targets.forEach(function(q){
+      var lp = null;
+      q.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+      q.addEventListener('pointerdown', function(e){
+        e.stopPropagation();
+        lp = setTimeout(function(){ lp = null; resetFn(); }, 600);
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev){
+        q.addEventListener(ev, function(){ if (lp){ clearTimeout(lp); lp = null; } });
+      });
+    });
+  }
+
+  /* mischt, ohne die schon richtige Reihenfolge zu erwischen */
   function shuffle(cards){
     var a = cards.slice();
     for (var attempt = 0; attempt < 8; attempt++){
@@ -78,8 +110,7 @@
     }
     return a;
   }
-
-  /* ---- single choice (also used by true/false) ---- */
+  /* ---- single-choice ---- */
   function setupSingle(quiz){
     var opts = [].slice.call(quiz.querySelectorAll('.quiz-opt'));
     opts.forEach(function(opt){
@@ -90,14 +121,18 @@
         if (quiz.classList.contains('quiz-done')) return;
         quiz.classList.add('quiz-done');
         var correct = opt.hasAttribute('data-correct');
-        opt.classList.add(correct ? 'correct' : 'wrong');
-        if (!correct) opts.forEach(function(o){ if (o.hasAttribute('data-correct')) o.classList.add('correct'); });
+        markResult(opt, correct ? 'correct' : 'wrong');
+        if (!correct) opts.forEach(function(o){ if (o.hasAttribute('data-correct')) markResult(o, 'correct'); });
         opt.blur();
       });
     });
+    wireReset(quiz, function(){
+      quiz.classList.remove('quiz-done');
+      clearResults(opts);
+    });
   }
 
-  /* ---- multiple choice ---- */
+  /* ---- Mehrfachauswahl ---- */
   function setupMultiple(quiz, o){
     var opts = [].slice.call(quiz.querySelectorAll('.quiz-opt'));
     opts.forEach(function(opt){
@@ -122,18 +157,22 @@
         var correct = opt.hasAttribute('data-correct');
         var selected = opt.classList.contains('selected');
         opt.classList.remove('selected');
-        if (correct && selected) opt.classList.add('correct');
-        else if (!correct && selected) opt.classList.add('wrong');
-        else if (correct && !selected) opt.classList.add('missed');
+        if (correct && selected) markResult(opt, 'correct');
+        else if (!correct && selected) markResult(opt, 'wrong');
+        else if (correct && !selected) markResult(opt, 'missed');
       });
       btn.blur();
     });
     actions.appendChild(btn);
     quiz.appendChild(actions);
+    wireReset(quiz, function(){
+      quiz.classList.remove('quiz-done');
+      clearResults(opts);
+    });
   }
 
-  /* ---- true / false ---- */
-  function isTrueAns(ans){ ans = (ans || '').toLowerCase(); return ans === 'true' || ans === 'wahr' || ans === '1' || ans === 'yes' || ans === 'richtig'; }
+  /* ---- Wahr/Falsch ---- */
+  function isTrueAns(ans){ ans = (ans || '').toLowerCase(); return ans === 'true' || ans === 'wahr' || ans === '1' || ans === 'richtig'; }
 
   function makeTF(o, trueCorrect){
     var wrap = document.createElement('div'); wrap.className = 'quiz-options quiz-tf';
@@ -142,56 +181,91 @@
     wrap.appendChild(bT); wrap.appendChild(bF);
     return wrap;
   }
-  /* wire one true/false question; onAnswered() fires after the first tap */
+  /* eine Wahr/Falsch-Frage verdrahten; onAnswered() nach dem ersten Antippen.
+     Gibt einen Controller mit reset() zurück. */
   function wireTF(wrap, onAnswered){
     var opts = [].slice.call(wrap.querySelectorAll('.quiz-opt'));
-    var done = false;
+    var state = { done: false };
     opts.forEach(function(opt){
       noFocus(opt);
       opt.addEventListener('pointerdown', stopP);
       opt.addEventListener('click', function(e){
         e.stopPropagation(); e.preventDefault();
-        if (done) return; done = true;
+        if (state.done) return; state.done = true;
         var correct = opt.hasAttribute('data-correct');
-        opt.classList.add(correct ? 'correct' : 'wrong');
-        if (!correct) opts.forEach(function(o2){ if (o2.hasAttribute('data-correct')) o2.classList.add('correct'); });
+        markResult(opt, correct ? 'correct' : 'wrong');
+        if (!correct) opts.forEach(function(o2){ if (o2.hasAttribute('data-correct')) markResult(o2, 'correct'); });
         opt.blur();
         if (onAnswered) onAnswered();
       });
     });
+    return { reset: function(){ state.done = false; clearResults(opts); } };
   }
 
-  function setupTrueFalse(quiz, o){
+  function setupTrueFalse(quiz, o, sizers){
     var items = [].slice.call(quiz.querySelectorAll('.quiz-tf-item'));
 
-    /* single question (backwards compatible): data-answer on the .quiz */
+    /* Einzelfrage (abwärtskompatibel): data-answer direkt am .quiz */
     if (!items.length){
       var wrap = makeTF(o, isTrueAns(quiz.getAttribute('data-answer')));
       quiz.appendChild(wrap);
-      wireTF(wrap, null);
+      var ctl = wireTF(wrap, null);
+      wireReset(quiz, function(){ ctl.reset(); });
       return;
     }
 
-    /* several questions on one slide: answer → hold briefly →
-       automatically cross-fade to the next (no click needed). */
+    /* Mehrere Fragen auf einer Folie: beantworten → kurz stehen lassen →
+       automatisch in die nächste überblenden (kein Klick nötig). */
     quiz.classList.add('quiz-tf-stage');
+    var ctls = [], pending = null;
     items.forEach(function(item, i){
       var wrap = makeTF(o, isTrueAns(item.getAttribute('data-answer')));
       item.appendChild(wrap);
-      wireTF(wrap, function(){
-        if (i >= items.length - 1) return;         // last question: keep it on screen
-        setTimeout(function(){
+      ctls.push(wireTF(wrap, function(){
+        if (i >= items.length - 1) return;         // letzte Frage: stehen lassen
+        pending = setTimeout(function(){
+          pending = null;
           items[i].classList.remove('active');
           items[i + 1].classList.add('active');
         }, o.tfHold);
-      });
+      }));
       item.classList.toggle('active', i === 0);
     });
+
+    wireReset(quiz, function(){
+      if (pending){ clearTimeout(pending); pending = null; }
+      ctls.forEach(function(ctl){ ctl.reset(); });
+      items.forEach(function(item, i){ item.classList.toggle('active', i === 0); });
+    });
+
+    /* Bühne auf die höchste Frage setzen statt fester 230 px – lange Fragen
+       laufen sonst unten raus. Auf versteckten Folien ist noch nichts messbar;
+       dann wird es beim nächsten Folienwechsel erneut versucht (sizers). */
+    function sizeStage(){
+      if (sizeStage.done) return;
+      var maxH = 0;
+      items.forEach(function(item){
+        var prev = item.style.position;
+        item.style.position = 'static';
+        var h = item.offsetHeight;
+        item.style.position = prev;
+        if (h > maxH) maxH = h;
+      });
+      if (maxH > 0){
+        quiz.style.minHeight = (maxH + 10) + 'px';
+        sizeStage.done = true;
+      }
+    }
+    sizeStage();
+    if (sizers) sizers.push(sizeStage);
+    if (document.fonts && document.fonts.ready){
+      document.fonts.ready.then(function(){ sizeStage.done = false; sizeStage(); });
+    }
   }
 
-  /* size every order card to the widest one, for a tidy grid. Measures with
-     a canvas, so it works even on slides that are not visible yet
-     (independent of layout). */
+  /* setzt alle Order-Karten auf die Breite der breitesten – für ein
+     gleichmäßiges Raster. Misst per Canvas, klappt auch auf noch
+     unsichtbaren Folien (unabhängig vom Layout). */
   function equalizeCards(cards){
     if (!cards.length) return;
     var cs = window.getComputedStyle(cards[0]);
@@ -201,12 +275,12 @@
     ctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
     var maxText = 0;
     cards.forEach(function(c){ var w = ctx.measureText(c.textContent).width; if (w > maxText) maxText = w; });
-    var extra = 26 + 14 + 18 + 18 + 3;   // number badge + gap + left/right padding + border
+    var extra = 26 + 14 + 18 + 18 + 3;   // Nummern-Badge + gap + padding links/rechts + Rahmen
     var w = Math.ceil(maxText + extra + 6);
     cards.forEach(function(c){ c.style.width = w + 'px'; });
   }
 
-  /* swap two elements in the DOM safely (even when adjacent) */
+  /* tauscht zwei Elemente sicher im DOM (auch wenn benachbart) */
   function swapNodes(a, b){
     var tmp = document.createElement('span');
     a.parentNode.insertBefore(tmp, a);
@@ -215,7 +289,7 @@
     tmp.parentNode.removeChild(tmp);
   }
 
-  /* ---- order (tap two cards to swap) ---- */
+  /* ---- Reihenfolge (Tippen zum Tauschen) ---- */
   function setupOrder(quiz, o){
     var list = quiz.querySelector('.quiz-options');
     if (!list) return;
@@ -226,7 +300,7 @@
     equalizeCards(cards);
 
     var picked = null;
-    function clearColors(){ cards.forEach(function(c){ c.classList.remove('correct', 'wrong'); }); }
+    function clearColors(){ cards.forEach(function(c){ c.classList.remove('correct', 'wrong'); c.removeAttribute('aria-label'); }); }
 
     cards.forEach(function(card){
       card.type = 'button';
@@ -237,11 +311,11 @@
         if (!picked){
           picked = card; card.classList.add('picked');
         } else if (picked === card){
-          picked.classList.remove('picked'); picked = null;         // deselect
+          picked.classList.remove('picked'); picked = null;         // Auswahl aufheben
         } else {
-          swapNodes(picked, card);                                  // swap
+          swapNodes(picked, card);                                  // tauschen
           picked.classList.remove('picked'); picked = null;
-          clearColors();                                            // colours are stale after a swap
+          clearColors();                                            // Färbung ist nach dem Tausch veraltet
         }
         card.blur();
       });
@@ -250,12 +324,12 @@
     function check(){
       [].slice.call(list.children).forEach(function(card, i){
         card.classList.remove('correct', 'wrong');
-        card.classList.add(String(card.getAttribute('data-order')) === String(i + 1) ? 'correct' : 'wrong');
+        markResult(card, String(card.getAttribute('data-order')) === String(i + 1) ? 'correct' : 'wrong');
       });
     }
     function reset(){
       if (picked){ picked.classList.remove('picked'); picked = null; }
-      shuffle(cards).forEach(function(card){ card.classList.remove('correct', 'wrong'); list.appendChild(card); });
+      shuffle(cards).forEach(function(card){ card.classList.remove('correct', 'wrong'); card.removeAttribute('aria-label'); list.appendChild(card); });
     }
 
     var actions = document.createElement('div'); actions.className = 'quiz-actions';
@@ -267,6 +341,7 @@
     bReset.addEventListener('click', function(e){ e.stopPropagation(); reset(); bReset.blur(); });
     actions.appendChild(bCheck); actions.appendChild(bReset);
     quiz.appendChild(actions);
+    wireReset(quiz, reset);   // Langdruck auf die Frage wie bei den anderen Typen
   }
 
   var Plugin = {
@@ -276,14 +351,15 @@
       var c = deck.getConfig().quiz || {};
       var o = {
         accent: c.accent || '#2C4A6E', ok: c.ok || '#639922', bad: c.bad || '#D14A4A', line: c.line || '#E7EBEF',
-        checkLabel: c.checkLabel || 'Check', trueLabel: c.trueLabel || 'True', falseLabel: c.falseLabel || 'False',
-        resetLabel: c.resetLabel || 'Reset', tfHold: c.tfHold || 1200
+        checkLabel: c.checkLabel || 'Prüfen', trueLabel: c.trueLabel || 'Wahr', falseLabel: c.falseLabel || 'Falsch',
+        resetLabel: c.resetLabel || 'Zurücksetzen', tfHold: (c.tfHold != null) ? c.tfHold : 1200
       };
       injectCSS(o);
+      var sizers = [];   // TF-Bühnen, die auf versteckten Folien noch nicht messbar waren
       var TYPES = {
         single: setupSingle,
         multiple: function(q){ setupMultiple(q, o); },
-        truefalse: function(q){ setupTrueFalse(q, o); },
+        truefalse: function(q){ setupTrueFalse(q, o, sizers); },
         order: function(q){ setupOrder(q, o); }
       };
 
@@ -297,7 +373,10 @@
         });
       }
       build();
-      if (deck.on) deck.on('slidechanged', build);
+      if (deck.on) deck.on('slidechanged', function(){
+        build();
+        sizers.forEach(function(f){ f(); });
+      });
     }
   };
 
