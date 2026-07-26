@@ -1,6 +1,6 @@
 {
   "name": "reveal.js-quiz",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Interactive exercises for reveal.js: single choice, multiple choice, true/false and ordering — touch and smartboard friendly.",
   "keywords": "reveal, reveal.js, quiz, exercise, question, multiple-choice, true-false, ordering, touch, smartboard, teaching, reveal-plugin, plugin",
   "homepage": "https://github.com/florianloyns/reveal.js-quiz",

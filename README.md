@@ -111,6 +111,23 @@ Put the items in their **correct** order in the markup (`data-order="1"`, `2`, �
 </div>
 ```
 
+### Matching
+
+Sort cards into categories. Write the cards, each with the category it belongs to — the baskets are built from those values. `data-bins` fixes their order and wording; leave it out and the order of first appearance is used.
+
+```html
+<div class="quiz" data-type="match" data-bins="Contact|Droplet|Airborne">
+  <div class="quiz-q">Which route of transmission?</div>
+  <div class="quiz-options">
+    <button class="quiz-opt" data-bin="Contact">MRSA on the staff's hands</button>
+    <button class="quiz-opt" data-bin="Droplet">Influenza from a metre away</button>
+    <button class="quiz-opt" data-bin="Airborne">Measles through room air</button>
+  </div>
+</div>
+```
+
+Tap a card, then tap a basket — no dragging, because dragging on a smartboard is unreliable and a mis-drag looks like a wrong answer. Tapping a placed card and then the pool takes it back. **Check** marks each card: green where it sits correctly, red where it does not, amber for cards still in the pool — those are unfinished, not wrong, and colouring them green would say the opposite.
+
 ## Configuration
 
 All options are optional — for theming the colours and translating the labels.
@@ -151,6 +168,12 @@ quiz: { checkLabel: 'Prüfen', trueLabel: 'Wahr', falseLabel: 'Falsch', resetLab
 ```
 
 ## Changelog
+
+**1.2.0**
+
+- New question type `match`: sort cards into categories by tapping.
+- Multi-statement true/false no longer overlaps its lead question when a statement wraps;
+  every statement now starts at the same height and the buttons stay put.
 
 **1.1.0**
 

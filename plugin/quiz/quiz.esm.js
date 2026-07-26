@@ -1,5 +1,5 @@
 /*!
- * reveal.js-quiz 1.1.0
+ * reveal.js-quiz 1.2.0
  * Interactive exercises for reveal.js — single choice, multiple choice,
  * true/false and ordering. Touch / smartboard friendly, ships its own CSS,
  * colours and labels are easy to theme. Long-press a question to reset it.
@@ -14,7 +14,7 @@
     if (document.getElementById('quiz-css')) return;
     var css =
       ".reveal .quiz{max-width:840px;margin:0 auto;text-align:left}"
-    + ".reveal .quiz-q{font-size:26px;font-weight:700;line-height:1.2;color:#0B1818;margin:0 0 16px}"
+    + ".reveal .quiz-q{font-size:26px;font-weight:700;line-height:1.3;color:#0B1818;margin:0 0 16px}.quiz-tf-item .quiz-q{line-height:1.38;margin:0 0 18px}"
     + ".reveal .quiz-options{display:flex;flex-direction:column;gap:10px}"
     + ".reveal .quiz-opt{font-family:inherit;text-align:left;font-size:19px;line-height:1.22;color:#22312f;background:#fff;"
       + "border:1.5px solid " + o.line + ";border-radius:12px;padding:11px 16px;cursor:pointer;display:flex;align-items:center;gap:13px;transition:.13s}"
@@ -52,6 +52,21 @@
     + ".reveal .quiz-actions button{font-family:inherit;font-size:18px;font-weight:600;padding:9px 20px;border-radius:11px;cursor:pointer;border:1.5px solid " + o.accent + ";background:" + o.accent + ";color:#fff;transition:.12s}"
     + ".reveal .quiz-actions button.ghost{background:transparent;color:" + o.accent + "}"
     + ".reveal .quiz-actions button:active{transform:translateY(1px)}"
+    /* ---- Zuordnung: Karten in Kategorien einsortieren ---- */
+    + ".reveal .quiz[data-type=match]{max-width:1180px}"
+    + ".reveal .quiz-pool{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start;"
+      + "min-height:64px;padding:12px;margin:0 0 16px;border:2px dashed " + o.line + ";border-radius:14px;transition:.13s}"
+    + ".reveal .quiz-pool.target,.reveal .quiz-bin.target{border-color:" + o.accent + ";background:rgba(44,74,110,.05)}"
+    + ".reveal .quiz-bins{display:grid;grid-template-columns:repeat(var(--qb,3),minmax(0,1fr));gap:14px;align-items:stretch}"
+    + ".reveal .quiz-bin{display:flex;flex-direction:column;gap:9px;min-height:150px;padding:10px;"
+      + "border:2px solid " + o.line + ";border-radius:14px;transition:.13s}"
+    + ".reveal .quiz-bin-h{font-size:16px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:" + o.accent + ";"
+      + "text-align:center;padding-bottom:7px;border-bottom:1px solid " + o.line + "}"
+    + ".reveal .quiz-match .quiz-opt{font-size:18px;line-height:1.2;padding:9px 13px;gap:0;flex:0 0 auto}"
+    + ".reveal .quiz-match .quiz-opt::before{display:none}"
+    + ".reveal .quiz-match .quiz-opt.picked{box-shadow:0 0 0 3px rgba(44,74,110,.14)}"
+    /* im Pool liegen gebliebene Karten sind nicht richtig, sondern unerledigt */
+    + ".reveal .quiz-match .quiz-opt.missed{border-color:#D9930A;background:rgba(217,147,10,.10)}"
     /* Altbestand: frühere Decks enthalten noch .quiz-feedback-Kästen – bewusst ausgeblendet */
     + ".reveal .quiz-feedback{display:none}";
     var s = document.createElement('style');
@@ -247,8 +262,17 @@
         item.style.position = prev;
         if (h > maxH) maxH = h;
       });
+      var lead = null;
+      for (var li = 0; li < quiz.children.length; li++){
+        if (quiz.children[li].classList.contains('quiz-q')){ lead = quiz.children[li]; break; }
+      }
+      var leadH = 0;
+      if (lead){
+        leadH = lead.offsetHeight + 14;
+      }
       if (maxH > 0){
-        quiz.style.minHeight = (maxH + 10) + 'px';
+        items.forEach(function(item){ item.style.top = leadH + 'px'; });
+        quiz.style.minHeight = (leadH + maxH + 10) + 'px';
         sizeStage.done = true;
       }
     }
@@ -340,6 +364,125 @@
     wireReset(quiz, reset);   // Langdruck auf die Frage wie bei den anderen Typen
   }
 
+  /* ---- Zuordnung (Karten in Kategorien einsortieren) ----
+     Autor schreibt nur die Karten mit data-bin; die Koerbe entstehen daraus.
+     Bedienung am Board: Karte antippen, dann Korb antippen. Zurueck in den Pool
+     genauso. Kein Ziehen - Drag ist auf einem Smartboard unzuverlaessig. */
+  function setupMatch(quiz, o){
+    var list = quiz.querySelector('.quiz-options');
+    if (!list) return;
+    var cards = [].slice.call(list.querySelectorAll('.quiz-opt'));
+    if (!cards.length) return;
+
+    var bins = (quiz.getAttribute('data-bins') || '').split('|')
+                 .map(function(x){ return x.trim(); }).filter(Boolean);
+    if (!bins.length){
+      cards.forEach(function(c){
+        var b = (c.getAttribute('data-bin') || '').trim();
+        if (b && bins.indexOf(b) < 0) bins.push(b);
+      });
+    }
+    if (bins.length < 2) return;
+
+    quiz.classList.add('quiz-match');
+    var pool = document.createElement('div'); pool.className = 'quiz-pool';
+    var wrap = document.createElement('div'); wrap.className = 'quiz-bins';
+    wrap.style.setProperty('--qb', Math.min(bins.length, 4));
+    var drops = {};
+    bins.forEach(function(name){
+      var bin = document.createElement('div');
+      bin.className = 'quiz-bin'; bin.setAttribute('data-bin', name);
+      var h = document.createElement('div'); h.className = 'quiz-bin-h'; h.textContent = name;
+      bin.appendChild(h); wrap.appendChild(bin); drops[name] = bin;
+    });
+    list.parentNode.insertBefore(pool, list);
+    list.parentNode.insertBefore(wrap, list);
+    list.parentNode.removeChild(list);
+
+    var picked = null;
+    function highlight(on){
+      pool.classList.toggle('target', !!on);
+      bins.forEach(function(n){ drops[n].classList.toggle('target', !!on); });
+    }
+    function unpick(){
+      if (picked){ picked.classList.remove('picked'); picked = null; }
+      highlight(false);
+    }
+    function clearColors(){
+      cards.forEach(function(c){
+        c.classList.remove('correct', 'wrong', 'missed');
+        c.removeAttribute('aria-label');
+      });
+    }
+
+    cards.forEach(function(card){
+      card.type = 'button';
+      noFocus(card);
+      card.addEventListener('pointerdown', stopP);
+      card.addEventListener('click', function(e){
+        e.stopPropagation(); e.preventDefault();
+        if (picked === card){ unpick(); }
+        else { unpick(); picked = card; card.classList.add('picked'); highlight(true); }
+        card.blur();
+      });
+    });
+
+    function dropOn(container){
+      return function(e){
+        e.stopPropagation();
+        if (!picked) return;
+        var c = picked; unpick();
+        container.appendChild(c);
+        clearColors();
+      };
+    }
+    pool.addEventListener('pointerdown', stopP);
+    pool.addEventListener('click', dropOn(pool));
+    bins.forEach(function(n){
+      drops[n].addEventListener('pointerdown', stopP);
+      drops[n].addEventListener('click', dropOn(drops[n]));
+    });
+
+    function check(){
+      unpick();
+      cards.forEach(function(card){
+        card.classList.remove('correct', 'wrong', 'missed');
+        card.removeAttribute('aria-label');
+        var txt = (card.textContent || '').trim();
+        if (card.parentNode === pool){
+          card.classList.add('missed');
+          card.setAttribute('aria-label', txt + ' – noch nicht einsortiert');
+          return;
+        }
+        var soll = (card.getAttribute('data-bin') || '').trim();
+        var ist  = card.parentNode.getAttribute('data-bin');
+        if (ist === soll){
+          card.classList.add('correct');
+          card.setAttribute('aria-label', txt + ' – richtig einsortiert');
+        } else {
+          card.classList.add('wrong');
+          card.setAttribute('aria-label', txt + ' – gehört zu ' + soll);
+        }
+      });
+    }
+    function reset(){
+      unpick(); clearColors();
+      shuffle(cards).forEach(function(card){ pool.appendChild(card); });
+    }
+
+    var actions = document.createElement('div'); actions.className = 'quiz-actions';
+    var bCheck = document.createElement('button'); bCheck.type = 'button'; bCheck.textContent = o.checkLabel;
+    var bReset = document.createElement('button'); bReset.type = 'button'; bReset.className = 'ghost'; bReset.textContent = o.resetLabel;
+    noFocus(bCheck); noFocus(bReset);
+    bCheck.addEventListener('pointerdown', stopP); bReset.addEventListener('pointerdown', stopP);
+    bCheck.addEventListener('click', function(e){ e.stopPropagation(); check(); bCheck.blur(); });
+    bReset.addEventListener('click', function(e){ e.stopPropagation(); reset(); bReset.blur(); });
+    actions.appendChild(bCheck); actions.appendChild(bReset);
+    quiz.appendChild(actions);
+    wireReset(quiz, reset);
+    reset();
+  }
+
   var Plugin = {
     id: 'quiz',
     init: function (deck) {
@@ -356,7 +499,8 @@
         single: setupSingle,
         multiple: function(q){ setupMultiple(q, o); },
         truefalse: function(q){ setupTrueFalse(q, o, sizers); },
-        order: function(q){ setupOrder(q, o); }
+        order: function(q){ setupOrder(q, o); },
+        match: function(q){ setupMatch(q, o); }
       };
 
       function build(){
