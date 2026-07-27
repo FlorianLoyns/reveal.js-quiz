@@ -191,6 +191,10 @@ quiz: { checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel:
 
 Star the repo.
 
+## Imprint
+
+Responsible: Florian Loyns — [imprint & privacy notice](https://florianloyns.com/Impressum/) (German)
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Thanks to Hakim El Hattab (reveal.js).
