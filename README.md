@@ -10,6 +10,8 @@ Interactive exercises for [reveal.js](https://revealjs.com) — **single choice*
 
 ## Installation
 
+**Requires** reveal.js 4.2 or newer. Tested with reveal.js 5.x.
+
 Copy the `quiz` folder into your reveal.js `plugin/` folder — or install from npm.
 
 ```console
