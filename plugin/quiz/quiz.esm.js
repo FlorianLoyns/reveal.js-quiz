@@ -1,7 +1,7 @@
 /*!
- * reveal.js-quiz 1.2.0
+ * reveal.js-quiz 1.3.0
  * Interactive exercises for reveal.js — single choice, multiple choice,
- * true/false and ordering. Touch / smartboard friendly, ships its own CSS,
+ * true/false, ordering and matching. Touch / smartboard friendly, ships its own CSS,
  * colours and labels are easy to theme. Long-press a question to reset it.
  * @author  Florian Loyns
  * @license MIT

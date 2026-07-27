@@ -2,7 +2,7 @@
 
 [![reveal.js plugin](https://img.shields.io/badge/reveal.js-plugin-2C4A6E.svg)](https://revealjs.com) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Interactive exercises for [reveal.js](https://revealjs.com) — **single choice**, **multiple choice**, **true/false** and **ordering**. One markup scheme, one `data-type` attribute per exercise. Built for teaching at the board: everything works with a finger on a touch display or smartboard, feedback is shown by colour alone (nothing shifts on the slide), and students can try the same exercises again at home. Standalone (ships its own CSS), colours and labels are easy to theme.
+Interactive exercises for [reveal.js](https://revealjs.com) — **single choice**, **multiple choice**, **true/false**, **ordering** and **matching**. One markup scheme, one `data-type` attribute per exercise. Built for teaching at the board: everything works with a finger on a touch display or smartboard, feedback is shown by colour alone (nothing shifts on the slide), and students can try the same exercises again at home. Standalone (ships its own CSS), colours and labels are easy to theme.
 
 **[Live demo](https://florianloyns.github.io/reveal.js-quiz/demo.html)**
 
@@ -40,9 +40,7 @@ npm install reveal.js-quiz
 
 ## Usage
 
-Every exercise is a `<div class="quiz" data-type="…">`. Feedback is colour only: green = correct, red = wrong, green outline = correct answer that was missed (the result is also exposed via `aria-label` for screen readers).
-
-**Reset:** long-press the question (~0.6 s) to reset any exercise — handy when the next group should try the same slide. (Ordering additionally has its Reset button.)
+Every exercise is a `<div class="quiz" data-type="…">`. Feedback is colour only: green = correct, red = wrong, green outline = correct answer that was missed.
 
 ### Single choice
 
@@ -113,20 +111,23 @@ Put the items in their **correct** order in the markup (`data-order="1"`, `2`, �
 
 ### Matching
 
-Sort cards into categories. Write the cards, each with the category it belongs to — the baskets are built from those values. `data-bins` fixes their order and wording; leave it out and the order of first appearance is used.
+Sort cards into columns. Name the columns with `data-bins="A|B|C"` on the `.quiz` and give every card the column it belongs to with `data-bin`. The cards start shuffled in a pool above the columns.
+
+To sort, **tap a card** (it lifts and the possible targets are outlined), then **tap a column** to drop it there. Tapping the card a second time cancels the selection; tapping the pool puts a card back. **Check** grades: green = in the right column, red = in the wrong one, orange outline = still in the pool. **Reset** shuffles everything back.
+
+Up to four columns sit side by side; the cards themselves wrap, so a set of a dozen still fits on one slide. Leaving `data-bins` out is allowed — the columns are then collected from the cards' own `data-bin` values, in the order they first appear.
 
 ```html
-<div class="quiz" data-type="match" data-bins="Contact|Droplet|Airborne">
-  <div class="quiz-q">Which route of transmission?</div>
+<div class="quiz" data-type="match" data-bins="Nurse|Assistant">
+  <div class="quiz-q">Who is allowed to do what? Sort the cards, then Check.</div>
   <div class="quiz-options">
-    <button class="quiz-opt" data-bin="Contact">MRSA on the staff's hands</button>
-    <button class="quiz-opt" data-bin="Droplet">Influenza from a metre away</button>
-    <button class="quiz-opt" data-bin="Airborne">Measles through room air</button>
+    <button class="quiz-opt" data-bin="Nurse">Assess the care need</button>
+    <button class="quiz-opt" data-bin="Nurse">Steer the care process</button>
+    <button class="quiz-opt" data-bin="Assistant">Help with washing</button>
+    <button class="quiz-opt" data-bin="Assistant">Serve meals</button>
   </div>
 </div>
 ```
-
-Tap a card, then tap a basket — no dragging, because dragging on a smartboard is unreliable and a mis-drag looks like a wrong answer. Tapping a placed card and then the pool takes it back. **Check** marks each card: green where it sits correctly, red where it does not, amber for cards still in the pool — those are unfinished, not wrong, and colouring them green would say the opposite.
 
 ## Configuration
 
@@ -139,11 +140,11 @@ Reveal.initialize({
     ok:     '#639922',   // correct
     bad:    '#D14A4A',   // wrong
     line:   '#E7EBEF',   // resting border
-    checkLabel: 'Check',
-    trueLabel:  'True',
-    falseLabel: 'False',
-    resetLabel: 'Reset',
-    tfHold: 1200          // ms a true/false answer stays before cross-fading
+    checkLabel: 'Prüfen',        // the shipped labels are German
+    trueLabel:  'Wahr',
+    falseLabel: 'Falsch',
+    resetLabel: 'Zurücksetzen',
+    tfHold: 1200                 // ms a true/false answer stays before cross-fading
   },
   plugins: [ RevealQuiz ]
 });
@@ -155,34 +156,36 @@ Reveal.initialize({
 | `ok` | `'#639922'` | Correct answers |
 | `bad` | `'#D14A4A'` | Wrong answers |
 | `line` | `'#E7EBEF'` | Resting option border |
-| `checkLabel` | `'Check'` | Label of the check button (multiple / order) |
-| `trueLabel` | `'True'` | True button label |
-| `falseLabel` | `'False'` | False button label |
-| `resetLabel` | `'Reset'` | Reset button label (order) |
+| `checkLabel` | `'Prüfen'` | Label of the check button (multiple / order / match) |
+| `trueLabel` | `'Wahr'` | True button label |
+| `falseLabel` | `'Falsch'` | False button label |
+| `resetLabel` | `'Zurücksetzen'` | Reset button label (order / match) |
 | `tfHold` | `1200` | Milliseconds a true/false answer stays before the next fades in |
 
-German labels, for example:
+The shipped labels are German, because that is where the plugin grew up. English, for example:
 
 ```js
-quiz: { checkLabel: 'Prüfen', trueLabel: 'Wahr', falseLabel: 'Falsch', resetLabel: 'Zurücksetzen' }
+quiz: { checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel: 'Reset' }
 ```
 
 ## Changelog
 
+**1.3.0**
+
+- New exercise type **`match`**: sort cards into named columns — the classic classification exercise, and the one that generates the most discussion at the board because a card can be argued about before it is dropped.
+- Cards that were never sorted are marked separately from wrong ones, so "didn't get to it" and "got it wrong" stay distinguishable.
+
 **1.2.0**
 
-- New question type `match`: sort cards into categories by tapping.
-- Multi-statement true/false no longer overlaps its lead question when a statement wraps;
-  every statement now starts at the same height and the buttons stay put.
+- **Long-press a question** (~0.6 s) to reset that exercise — handy when the next group comes up to the board.
+- The true/false type holds each answer briefly and then cross-fades to the next statement, so nothing shifts on the slide.
+- Feedback is announced to screen readers via `aria-label`.
 
 **1.1.0**
 
-- Long-press the question (~0.6 s) to reset any exercise type — not just ordering.
-- Multi-statement true/false sizes its stage to the tallest question, so long statements no longer overflow.
-- Results carry an `aria-label` (correct / wrong / missed) alongside the colour.
-- `tfHold: 0` is now respected (no longer falls back to the default).
+- New exercise type **`order`**: tap two cards to swap them, in a wrapping grid so long sequences fit on one slide.
 
-**1.0.0** — initial release.
+**1.0.0** — initial release with single choice, multiple choice and true/false.
 
 ## Like it?
 

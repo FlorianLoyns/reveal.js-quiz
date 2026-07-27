@@ -21,8 +21,7 @@
 
     <section>
       <h2>Quiz</h2>
-      <p class="lead">Four interactive exercise types for reveal.js — built for touch and smartboards.<br>Use the arrows to step through single choice, multiple choice, true/false and ordering.</p>
-      <p class="lead" style="font-size:.55em">Tip: long-press a question to reset it for the next group.</p>
+      <p class="lead">Five interactive exercise types for reveal.js — built for touch and smartboards.<br>Use the arrows to step through single choice, multiple choice, true/false, ordering and matching.</p>
     </section>
 
     <section>
@@ -79,6 +78,22 @@
       </div>
     </section>
 
+    <section>
+      <h3>Matching</h3>
+      <p class="lead">Tap a card, then tap the column it belongs to. Tap it again to put it back.</p>
+      <div class="quiz" data-type="match" data-bins="Nurse|Assistant">
+        <div class="quiz-q">Who is allowed to do what? Sort the cards, then Check.</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" data-bin="Nurse">Assess the care need</button>
+          <button class="quiz-opt" data-bin="Nurse">Steer the care process</button>
+          <button class="quiz-opt" data-bin="Nurse">Secure care quality</button>
+          <button class="quiz-opt" data-bin="Assistant">Help with washing</button>
+          <button class="quiz-opt" data-bin="Assistant">Serve meals</button>
+          <button class="quiz-opt" data-bin="Assistant">Make the beds</button>
+        </div>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -90,7 +105,12 @@
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="plugin/quiz/quiz.js"></script>
 <script>
-  Reveal.initialize({ hash: true, plugins: [ RevealQuiz ] });
+  Reveal.initialize({
+    hash: true,
+    // the plugin ships German labels; this is how you translate them
+    quiz: { checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel: 'Reset' },
+    plugins: [ RevealQuiz ]
+  });
 </script>
 </body>
 </html>
