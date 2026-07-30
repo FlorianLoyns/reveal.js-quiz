@@ -1,5 +1,5 @@
 /*!
- * reveal.js-quiz 1.3.0
+ * reveal.js-quiz 1.3.1
  * Interactive exercises for reveal.js — single choice, multiple choice,
  * true/false, ordering and matching. Touch / smartboard friendly, ships its own CSS,
  * colours and labels are easy to theme. Long-press a question to reset it.
@@ -71,6 +71,7 @@
     + ".reveal .quiz-match .quiz-opt.picked{box-shadow:0 0 0 3px rgba(44,74,110,.14)}"
     /* im Pool liegen gebliebene Karten sind nicht richtig, sondern unerledigt */
     + ".reveal .quiz-match .quiz-opt.missed{border-color:#D9930A;background:rgba(217,147,10,.10)}"
+    + ".reveal .quiz[data-type=match] .quiz-actions{justify-content:center;margin-top:20px}"
     /* Altbestand: frühere Decks enthalten noch .quiz-feedback-Kästen – bewusst ausgeblendet */
     + ".reveal .quiz-feedback{display:none}";
     var s = document.createElement('style');

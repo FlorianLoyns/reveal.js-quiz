@@ -172,6 +172,8 @@ quiz: { checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel:
 
 ## Changelog
 
+**1.3.1** — the action buttons under a **`match`** exercise are centred.
+
 **1.3.0**
 
 - New exercise type **`match`**: sort cards into named columns — the classic classification exercise, and the one that generates the most discussion at the board because a card can be argued about before it is dropped.
