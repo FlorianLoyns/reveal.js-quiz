@@ -1,5 +1,5 @@
 /*!
- * reveal.js-quiz 1.3.1
+ * reveal.js-quiz 1.4.1
  * Interactive exercises for reveal.js — single choice, multiple choice,
  * true/false, ordering and matching. Touch / smartboard friendly, ships its own CSS,
  * colours and labels are easy to theme. Long-press a question to reset it.
@@ -9,6 +9,23 @@
  */
 
 'use strict';
+
+  /* ---- Druck: überall gleich erkannt und gleich ausgegeben ----
+     reveal.js baut die Druckansicht mit ?print-pdf in der URL (oder view:'print'
+     in der Konfiguration) und setzt dann nur Klassen an <html>; @media print greift
+     erst im Druckdialog. Darum jede Druckregel zweimal: für den Druckdialog und
+     für die ?print-pdf-Ansicht – so sieht die Vorschau im Browser aus wie das PDF. */
+  function isPrintView(deck){
+    if (/(?:\?|&)print-pdf\b/i.test(window.location.search)) return true;
+    var c = deck && deck.getConfig ? deck.getConfig() : null;
+    return !!(c && c.view === 'print');
+  }
+  function printCSS(css){
+    var pdf = css.replace(/(^|\})([^{}]+)\{/g, function (m, vor, sel) {
+      return vor + sel.split(',').map(function (s) { return 'html.print-pdf ' + s.trim(); }).join(',') + '{';
+    });
+    return '@media print{' + css + '}' + pdf;
+  }
 
   function injectCSS(o){
     if (document.getElementById('quiz-css')) return;
@@ -68,8 +85,50 @@
     /* im Pool liegen gebliebene Karten sind nicht richtig, sondern unerledigt */
     + ".reveal .quiz-match .quiz-opt.missed{border-color:#D9930A;background:rgba(217,147,10,.10)}"
     + ".reveal .quiz[data-type=match] .quiz-actions{justify-content:center;margin-top:20px}"
+    /* ================= Druck / PDF-Export (?print-pdf) =================
+       Gilt nur, wenn revealSolution() die Klasse .quiz-print gesetzt hat.
+       Schriftgrößen, Farben und Abstände kommen aus der gemeinsamen
+       Druckskala (--print-*), die ein Theme einmal für alle Plugins setzt;
+       ohne Theme greifen die Werte hinter dem Komma. Im Druck steht jede
+       Aufgabe linksbündig in voller Breite – wie Tabellen und Karten. */
+    + ".reveal .quiz.quiz-print{max-width:none;margin:0;color:var(--print-text,#22312f)}"
+    + ".reveal .quiz.quiz-print .quiz-q{font-size:var(--print-lead,22px);line-height:1.3;color:var(--print-ink,#0B1818)}"
+    + ".reveal .quiz.quiz-print .quiz-options{gap:var(--print-gap,10px)}"
+    + ".reveal .quiz.quiz-print .quiz-opt{font-size:var(--print-body,19px);line-height:1.3;padding:9px 14px;"
+      + "color:var(--print-text,#22312f);border-color:var(--print-line,#D9E0E7);box-shadow:none;transform:none}"
+    + ".reveal .quiz.quiz-print .quiz-opt::before{width:21px;height:21px;font-size:var(--print-label,14px)}"
+      /* nicht gewählte Optionen: lesbar grau statt fast unsichtbar (Schwarz-Weiß-Druck) */
+    + ".reveal .quiz.quiz-print.quiz-done .quiz-opt:not(.correct):not(.wrong):not(.missed){opacity:1;color:var(--print-muted,#5A6A75)}"
+    + ".reveal .quiz.quiz-print .quiz-opt.correct{border-color:var(--print-ok," + o.ok + ");color:var(--print-ink,#0B1818)}"
+    + ".reveal .quiz.quiz-print .quiz-opt.correct::before{border-color:var(--print-ok," + o.ok + ");background:var(--print-ok," + o.ok + ")}"
+    + ".reveal .quiz.quiz-print .quiz-actions{display:none}"
+      /* Wahr/Falsch: alle Aussagen untereinander – Aussage links, Antwort rechts */
+    + ".reveal .quiz.quiz-print.quiz-tf-stage{width:auto;min-height:0 !important}"
+    + ".reveal .quiz.quiz-print .quiz-tf-item{position:static;opacity:1;pointer-events:none;display:grid;"
+      + "grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:24px;"
+      + "padding:9px 0;border-bottom:1px solid var(--print-line,#D9E0E7)}"
+    + ".reveal .quiz.quiz-print .quiz-tf-item:first-child{border-top:1px solid var(--print-line,#D9E0E7)}"
+    + ".reveal .quiz.quiz-print .quiz-tf-item .quiz-q{font-size:var(--print-body,19px);font-weight:600;line-height:1.3;margin:0}"
+    + ".reveal .quiz.quiz-print .quiz-tf{gap:8px;justify-content:flex-start}"
+    + ".reveal .quiz.quiz-print .quiz-tf .quiz-opt{flex:0 0 auto;width:118px;font-size:var(--print-label,14px);font-weight:600;padding:6px 10px;gap:6px}"
+    + ".reveal .quiz.quiz-print .quiz-tf .quiz-opt.correct::before{display:flex;width:16px;height:16px;font-size:11px}"
+      /* Reihenfolge: links beginnen; Platznummer in der Akzentfarbe – Grün
+         bleibt der Lösung vorbehalten (Rand und Fläche der Karte). */
+    + ".reveal .quiz.quiz-print .quiz-grid{justify-content:flex-start}"
+    + ".reveal .quiz.quiz-print .quiz-grid .quiz-opt.correct::before{background:var(--print-accent," + o.accent + ")}"
+      /* Zuordnung: leerer Ablagebereich entfällt, Körbe ohne Mindesthöhe */
+    + ".reveal .quiz.quiz-print[data-type=match]{max-width:none}"
+    + ".reveal .quiz.quiz-print .quiz-pool.quiz-pool-empty{display:none}"
+    + ".reveal .quiz.quiz-print .quiz-bin{min-height:0}"
+    + ".reveal .quiz.quiz-print .quiz-bin-h{font-size:var(--print-label,14px)}"
+    + ".reveal .quiz.quiz-print .quiz-match .quiz-opt{font-size:var(--print-body,19px)}"
     /* Altbestand: frühere Decks enthalten noch .quiz-feedback-Kästen – bewusst ausgeblendet */
-    + ".reveal .quiz-feedback{display:none}";
+    + ".reveal .quiz-feedback{display:none}"
+    /* Browser unterdrücken beim Drucken standardmäßig Hintergrundfarben
+       ("Hintergrundgrafiken drucken" ist meist aus) – ohne das hier wäre
+       die komplette Farb-Kodierung (richtig/falsch, Zahlen-Badges, Körbe)
+       im PDF-Export unsichtbar. */
+    + ".reveal .quiz,.reveal .quiz *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}";
     var s = document.createElement('style');
     s.id = 'quiz-css'; s.textContent = css;
     document.head.appendChild(s);
@@ -79,6 +138,7 @@
   /* verhindert, dass ein angetippter Button den Fokus bekommt – sonst
      scrollt reveal die skalierte Folie minimal und alles "verzieht" sich. */
   function noFocus(el){ el.addEventListener('mousedown', function(e){ e.preventDefault(); }); }
+
 
   /* Ergebnisklasse + aria-label setzen (Farbe allein reicht Screenreadern nicht) */
   function markResult(opt, kind){
@@ -93,6 +153,59 @@
       o2.classList.remove('correct', 'wrong', 'missed', 'selected');
       o2.removeAttribute('aria-label');
     });
+  }
+  function markCorrectIn(scope){
+    [].slice.call(scope.querySelectorAll('.quiz-opt')).forEach(function(opt){
+      if (opt.hasAttribute('data-correct')) markResult(opt, 'correct');
+    });
+  }
+  function hideActions(quiz){
+    var actions = quiz.querySelector('.quiz-actions');
+    if (actions) actions.style.display = 'none';
+  }
+
+  /* Beim PDF-Export passiert kein Klick – also auch keine "richtig/falsch"
+     Logik. Darum wird beim Export die Lösung direkt statisch eingeblendet,
+     statt (wie sonst) erst nach Antippen durch den Betrachter. */
+  function revealSolution(quiz, type){
+    quiz.classList.add('quiz-print');
+    if (type === 'single' || type === 'multiple'){
+      quiz.classList.add('quiz-done');
+      markCorrectIn(quiz);
+      hideActions(quiz);
+    } else if (type === 'truefalse'){
+      var items = [].slice.call(quiz.querySelectorAll('.quiz-tf-item'));
+      if (!items.length){
+        markCorrectIn(quiz);
+      } else {
+        /* im Druck werden alle Aussagen gleichzeitig gestapelt statt
+           einzeln überzublenden – mit den großen Touch-Buttons würde das
+           bei vielen Aussagen auf einer Folie die Seite sprengen, darum
+           ein eigenes, kompaktes Layout nur für diesen Fall. */
+        quiz.style.minHeight = '';
+        items.forEach(function(item){ markCorrectIn(item); });
+      }
+    } else if (type === 'order'){
+      var list = quiz.querySelector('.quiz-options');
+      if (list){
+        var cards = [].slice.call(list.querySelectorAll('.quiz-opt'));
+        cards.sort(function(a, b){ return (+a.getAttribute('data-order')) - (+b.getAttribute('data-order')); });
+        cards.forEach(function(card){ list.appendChild(card); markResult(card, 'correct'); });
+      }
+      hideActions(quiz);
+    } else if (type === 'match'){
+      var bins = [].slice.call(quiz.querySelectorAll('.quiz-bin'));
+      [].slice.call(quiz.querySelectorAll('.quiz-opt')).forEach(function(card){
+        var soll = (card.getAttribute('data-bin') || '').trim();
+        var target = bins.filter(function(b){ return b.getAttribute('data-bin') === soll; })[0];
+        if (target) target.appendChild(card);
+        markResult(card, 'correct');
+      });
+      /* liegt nichts mehr im Ablagebereich, wird er im Druck ausgeblendet */
+      var pool = quiz.querySelector('.quiz-pool');
+      if (pool && !pool.querySelector('.quiz-opt')) pool.classList.add('quiz-pool-empty');
+      hideActions(quiz);
+    }
   }
 
   /* Langdruck (~0,6 s) auf die Frage setzt die Aufgabe zurück – für die nächste Gruppe */
@@ -504,13 +617,16 @@
         match: function(q){ setupMatch(q, o); }
       };
 
+      var printMode = isPrintView(deck);
       function build(){
         d.querySelectorAll('.quiz[data-type]').forEach(function(quiz){
           if (quiz.getAttribute('data-quiz-init')) return;
-          var fn = TYPES[quiz.getAttribute('data-type')];
+          var type = quiz.getAttribute('data-type');
+          var fn = TYPES[type];
           if (!fn) return;
           quiz.setAttribute('data-quiz-init', '1');
           fn(quiz);
+          if (printMode) revealSolution(quiz, type);
         });
       }
       build();

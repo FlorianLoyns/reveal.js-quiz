@@ -170,7 +170,42 @@ The shipped labels are German, because that is where the plugin grew up. English
 quiz: { checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel: 'Reset' }
 ```
 
+## Printing
+
+Open the deck with `?print-pdf`. Every exercise prints with its solution: correct options are marked green with a tick, the others stay readable in grey (they also work in black and white), `order` cards appear in the right sequence, `match` cards sit in their columns and the empty pool disappears. All true/false statements of a slide are listed one below the other, statement left, answer right. In print the exercises run left-aligned across the full content width, like tables and cards.
+
+### Shared print tokens
+
+In print, sizes and colours are read from CSS custom properties. Set them once in your theme and every plugin of the family (quiz, sequence, glossary, quizgrid, hotspot) prints in the same type scale; without a theme each plugin falls back to its own defaults. Explicit plugin options (such as `printFontSize`) still win.
+
+```css
+:root{
+  --print-pad: 38px 54px 34px;   /* margin of generated pages */
+  --print-kicker: 21px;          /* small caps line above the title */
+  --print-kicker-track: .28em;
+  --print-rule: 2px solid #E7EBEF;
+  --print-title: 38px;
+  --print-title-after: 20px;
+  --print-lead: 22px;            /* question text */
+  --print-body: 19px;            /* body text, options, entries */
+  --print-meta: 16px;            /* secondary line – the minimum */
+  --print-label: 14px;           /* numbers, buttons, column heads */
+  --print-lh: 1.4;
+  --print-gap: 14px;
+  --print-ink: #0B1818; --print-text: #22312F; --print-muted: #5A6A75;
+  --print-accent: #2C4A6E;       /* numbers, kicker */
+  --print-ok: #639922;           /* reserved for the solution */
+  --print-line: #D9E0E7;
+}
+```
+
 ## Changelog
+
+**1.4.1** — Print detection unified across the plugin family: every print rule now applies both in the browser print dialog and in reveal’s `?print-pdf` view, so the on-screen preview looks like the PDF; the print view is recognised the same way everywhere (`?print-pdf` or `view: 'print'`).
+
+**1.4.0** — Print layout harmonised with the plugin family: shared print tokens (`--print-*`), left-aligned full-width exercises, readable grey for unselected options, a tick on the correct true/false answer, statement and answer on one line, empty `match` pool hidden, order numbers in the accent colour (green stays reserved for the solution).
+
+**1.3.3** — PDF export (`?print-pdf`) shows the solution: correct options are marked, `order` cards appear in the right sequence, `match` cards sit in their columns, and the action buttons are hidden. True/false statements on one slide are stacked in a compact layout instead of cross-fading. Colour coding survives printing (`print-color-adjust: exact`), even with “background graphics” switched off in the print dialog.
 
 **1.3.1** — the action buttons under a **`match`** exercise are centred.
 
