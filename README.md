@@ -215,7 +215,7 @@ In print, sizes and colours are read from CSS custom properties. Set them once i
 
 ## Changelog
 
-**1.5.0** — New exercise type **`fill-blank`**: gaps in a text are filled by tapping words from a pool (with optional distractors). Prints with the solution in the text.
+**1.5.0** — New exercise type **`fill-blank`**: gaps in a text are filled by tapping words from a pool (with optional distractors). Prints with the solution in the text. All light tints (hover, selection, correct/wrong backgrounds, drop targets) are now derived from `accent`, `ok` and `bad`, so a custom colour scheme applies to every exercise type.
 
 **1.4.1** — Print detection unified across the plugin family: every print rule now applies both in the browser print dialog and in reveal’s `?print-pdf` view, so the on-screen preview looks like the PDF; the print view is recognised the same way everywhere (`?print-pdf` or `view: 'print'`).
 
