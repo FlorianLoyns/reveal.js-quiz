@@ -1,7 +1,7 @@
 /*!
- * reveal.js-quiz 1.4.1
+ * reveal.js-quiz 1.5.0
  * Interactive exercises for reveal.js — single choice, multiple choice,
- * true/false, ordering and matching. Touch / smartboard friendly, ships its own CSS,
+ * true/false, ordering, matching and fill-in-the-blank. Touch / smartboard friendly, ships its own CSS,
  * colours and labels are easy to theme. Long-press a question to reset it.
  * @author  Florian Loyns
  * @license MIT
@@ -31,8 +31,19 @@
     return '@media print{' + css + '}' + pdf;
   }
 
+  /* Tönung einer Konfigurationsfarbe (#rgb/#rrggbb → rgba) für Flächen und
+     Ringe; andere Schreibweisen gehen über color-mix (moderne Browser). */
+  function tint(color, alpha){
+    var m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((color || '').trim());
+    if (!m) return 'color-mix(in srgb,' + color + ' ' + Math.round(alpha * 100) + '%,transparent)';
+    var h = m[1]; if (h.length === 3) h = h.replace(/./g, function(ch){ return ch + ch; });
+    var n = parseInt(h, 16);
+    return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + alpha + ')';
+  }
+
   function injectCSS(o){
     if (document.getElementById('quiz-css')) return;
+    var warn = '#D9930A';   // "unerledigt" (Pool-Rest bei match, leere Lücke bei fill-blank)
     var css =
       ".reveal .quiz{max-width:840px;margin:0 auto;text-align:left}"
     + ".reveal .quiz-q{font-size:26px;font-weight:700;line-height:1.3;color:#0B1818;margin:0 0 16px}.quiz-tf-item .quiz-q{line-height:1.38;margin:0 0 18px}"
@@ -87,8 +98,47 @@
     + ".reveal .quiz-match .quiz-opt::before{display:none}"
     + ".reveal .quiz-match .quiz-opt.picked{box-shadow:0 0 0 3px rgba(44,74,110,.14)}"
     /* im Pool liegen gebliebene Karten sind nicht richtig, sondern unerledigt */
-    + ".reveal .quiz-match .quiz-opt.missed{border-color:#D9930A;background:rgba(217,147,10,.10)}"
+    + ".reveal .quiz-match .quiz-opt.missed{border-color:" + warn + ";background:" + tint(warn, .10) + "}"
     + ".reveal .quiz[data-type=match] .quiz-actions{justify-content:center;margin-top:20px}"
+    /* ---- Lückentext: Wörter aus dem Pool in Lücken setzen ----
+       Die Lücke ist ein leerer, leicht getönter Schlitz mit Nummer; eine
+       eingesetzte Wortkarte ersetzt ihn optisch (Rahmen und Fläche der Lücke
+       werden transparent, die Karte behält ihren eigenen Rahmen). Breite und
+       Höhe der Lücke sind fest (sizeBlanks), darum verschiebt sich beim
+       Einsetzen, Prüfen und Zurücklegen keine Zeile. */
+    + ".reveal .quiz[data-type=fill-blank]{max-width:1000px}"
+    + ".reveal .quiz-fill{counter-reset:qblank}"
+    + ".reveal .quiz-fill > p{font-size:24px;line-height:2.25;color:#22312f;margin:0 0 18px}"
+    + ".reveal .quiz-blank{counter-increment:qblank;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;"
+      + "box-sizing:border-box;min-width:90px;min-height:52px;padding:2px;margin:0 2px;"
+      + "border:2px dashed " + tint(o.accent, .40) + ";border-radius:12px;background:" + tint(o.accent, .04) + ";"
+      + "cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;"
+      + "transition:border-color .13s,background-color .13s,box-shadow .13s}"
+      /* Nummer der leeren Lücke – damit man am Board über "Lücke 2" sprechen kann */
+    + ".reveal .quiz-blank::before{content:counter(qblank);font-size:14px;font-weight:800;line-height:1;color:" + o.accent + ";opacity:.5;transition:opacity .13s}"
+    + ".reveal .quiz-blank:not(.filled):hover{border-color:" + o.accent + "}"
+    + ".reveal .quiz-blank.filled{border-color:transparent;background:transparent}"
+    + ".reveal .quiz-blank.filled::before{display:none}"
+      /* Wort gewählt: alle Lücken (auch belegte) sind mögliche Ziele */
+    + ".reveal .quiz-blank.target{border-color:" + o.accent + ";background:" + tint(o.accent, .07) + "}"
+    + ".reveal .quiz-blank.target::before{opacity:.8}"
+      /* Lücke zuerst gewählt: wartet auf ein Wort */
+    + ".reveal .quiz-blank.picked{border-style:solid;border-color:" + o.accent + ";background:" + tint(o.accent, .10) + ";box-shadow:0 0 0 3px " + tint(o.accent, .14) + "}"
+    + ".reveal .quiz-blank.picked::before{opacity:1}"
+    /* leer gebliebene Lücken sind nicht falsch, sondern unerledigt (wie im Pool bei match) */
+    + ".reveal .quiz-blank.missed{border-color:" + warn + ";background:" + tint(warn, .10) + "}"
+    + ".reveal .quiz-blank.missed::before{color:" + warn + ";opacity:1}"
+    + ".reveal .quiz-fill .quiz-pool{margin:0;padding:14px;gap:10px 12px}"
+    + ".reveal .quiz-fill .quiz-opt{font-size:20px;line-height:1.22;padding:8px 16px;gap:0;flex:0 0 auto;touch-action:manipulation;-webkit-user-select:none;user-select:none}"
+    + ".reveal .quiz-fill .quiz-opt::before{display:none}"
+    + ".reveal .quiz-fill .quiz-opt.picked{border-color:" + o.accent + ";background:" + tint(o.accent, .06) + ";"
+      + "box-shadow:0 0 0 3px " + tint(o.accent, .14) + ",0 10px 22px -12px rgba(0,0,0,.45);transform:translateY(-2px)}"
+      /* eingesetzte Karte "setzt sich" kurz; nach dem Prüfen treten die übrigen Pool-Karten zurück */
+    + ".reveal .quiz-blank.filled>.quiz-opt{animation:quiz-pop .22s cubic-bezier(.2,.9,.3,1.25)}"
+    + "@keyframes quiz-pop{from{transform:scale(.88)}to{transform:scale(1)}}"
+    + "@media (prefers-reduced-motion:reduce){.reveal .quiz-blank.filled>.quiz-opt{animation:none}}"
+    + ".reveal .quiz-fill.quiz-checked .quiz-pool .quiz-opt:not(.picked){opacity:.5}"
+    + ".reveal .quiz[data-type=fill-blank] .quiz-actions{justify-content:center;margin-top:20px}"
     /* ================= Druck / PDF-Export (?print-pdf) =================
        Gilt nur, wenn revealSolution() die Klasse .quiz-print gesetzt hat.
        Schriftgrößen, Farben und Abstände kommen aus der gemeinsamen
@@ -126,6 +176,14 @@
     + ".reveal .quiz.quiz-print .quiz-bin{min-height:0}"
     + ".reveal .quiz.quiz-print .quiz-bin-h{font-size:var(--print-label,14px)}"
     + ".reveal .quiz.quiz-print .quiz-match .quiz-opt{font-size:var(--print-body,19px)}"
+      /* Lückentext: Lösung steht im Text, die Wortkarten entfallen */
+    + ".reveal .quiz.quiz-print[data-type=fill-blank]{max-width:none}"
+    + ".reveal .quiz.quiz-print .quiz-fill > p{font-size:var(--print-lead,22px);line-height:2.1;color:var(--print-ink,#0B1818)}"
+    + ".reveal .quiz.quiz-print .quiz-blank{min-width:0 !important;min-height:0;padding:0;margin:0 2px;border-color:transparent;background:transparent;box-shadow:none;cursor:default}"
+    + ".reveal .quiz.quiz-print .quiz-blank::before{display:none}"
+    + ".reveal .quiz.quiz-print .quiz-blank>.quiz-opt{animation:none}"
+    + ".reveal .quiz.quiz-print .quiz-fill .quiz-opt{font-size:var(--print-body,19px);padding:2px 10px}"
+    + ".reveal .quiz.quiz-print .quiz-fill .quiz-pool{display:none}"
     /* Altbestand: frühere Decks enthalten noch .quiz-feedback-Kästen – bewusst ausgeblendet */
     + ".reveal .quiz-feedback{display:none}"
     /* Browser unterdrücken beim Drucken standardmäßig Hintergrundfarben
@@ -208,6 +266,17 @@
       /* liegt nichts mehr im Ablagebereich, wird er im Druck ausgeblendet */
       var pool = quiz.querySelector('.quiz-pool');
       if (pool && !pool.querySelector('.quiz-opt')) pool.classList.add('quiz-pool-empty');
+      hideActions(quiz);
+    } else if (type === 'fill-blank'){
+      var cardsF = [].slice.call(quiz.querySelectorAll('.quiz-opt'));
+      [].slice.call(quiz.querySelectorAll('.quiz-blank')).forEach(function(blank){
+        var soll = (blank.getAttribute('data-answer') || '').trim();
+        var card = cardsF.filter(function(c){ return c.getAttribute('data-word') === soll && c.parentNode.className.indexOf('quiz-blank') < 0; })[0];
+        if (!card) return;
+        blank.appendChild(card);
+        blank.classList.add('filled');
+        markResult(card, 'correct');
+      });
       hideActions(quiz);
     }
   }
@@ -601,6 +670,155 @@
     reset();
   }
 
+  /* ---- Lückentext (Wörter aus dem Pool in Lücken setzen) ----
+     Autor schreibt den Text mit <span class="quiz-blank" data-answer="Wort">;
+     der Pool entsteht aus den Antworten plus data-distractors="a|b" am .quiz.
+     Bedienung wie bei match: Wort antippen, dann Lücke antippen (oder erst die
+     Lücke, dann das Wort). Ein platziertes Wort antippen legt es zurück. */
+  function setupFillBlank(quiz, o){
+    var blanks = [].slice.call(quiz.querySelectorAll('.quiz-blank')).filter(function(b){
+      return (b.getAttribute('data-answer') || '').trim();
+    });
+    if (!blanks.length) return;
+    quiz.classList.add('quiz-fill');
+
+    var words = blanks.map(function(b){ return b.getAttribute('data-answer').trim(); });
+    (quiz.getAttribute('data-distractors') || '').split('|').forEach(function(w){
+      w = w.trim(); if (w) words.push(w);
+    });
+    var pool = document.createElement('div'); pool.className = 'quiz-pool';
+    var cards = words.map(function(w){
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'quiz-opt';
+      c.textContent = w; c.setAttribute('data-word', w);
+      return c;
+    });
+    quiz.appendChild(pool);
+
+    /* Lücken auf die Breite des längsten Worts setzen, damit beim Einsetzen
+       nichts umbricht (Messung per Canvas, klappt auch auf versteckten Folien).
+       Rahmen und Innenabstand von Karte und Lücke kommen aus dem Stylesheet,
+       damit die Zahl hier nicht mit dem CSS auseinanderläuft. */
+    function sizeBlanks(){
+      var canvas = sizeBlanks._c || (sizeBlanks._c = document.createElement('canvas'));
+      var ctx = canvas.getContext && canvas.getContext('2d');
+      if (!ctx) return;
+      var cs = window.getComputedStyle(cards[0]), bs = window.getComputedStyle(blanks[0]);
+      ctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+      var maxText = 0;
+      words.forEach(function(w){ var m = ctx.measureText(w).width; if (m > maxText) maxText = m; });
+      function px(v){ return parseFloat(v) || 0; }
+      var frame = px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth)
+                + px(bs.paddingLeft) + px(bs.paddingRight) + px(bs.borderLeftWidth) + px(bs.borderRightWidth);
+      if (!frame) frame = 32 + 3 + 4 + 4;   // Rückfall, falls noch nichts berechnet ist
+      var w = Math.ceil(maxText + frame + 6);
+      blanks.forEach(function(b){ b.style.minWidth = w + 'px'; });
+    }
+
+    var picked = null, pickedBlank = null;
+    function inBlank(card){ return card.parentNode !== pool; }
+    function refresh(){
+      blanks.forEach(function(b){ b.classList.toggle('filled', !!b.querySelector('.quiz-opt')); });
+    }
+    /* Ziele markieren: bei gewähltem Wort alle Lücken (der Pool nur, wenn das
+       Wort schon in einer Lücke steckt), bei gewählter Lücke den Pool. */
+    function highlight(){
+      blanks.forEach(function(b){ b.classList.toggle('target', !!picked); });
+      pool.classList.toggle('target', !!pickedBlank || !!(picked && inBlank(picked)));
+    }
+    function unpick(){
+      if (picked){ picked.classList.remove('picked'); picked = null; }
+      if (pickedBlank){ pickedBlank.classList.remove('picked'); pickedBlank = null; }
+      highlight();
+    }
+    function clearColors(){
+      quiz.classList.remove('quiz-checked');
+      cards.forEach(function(c){ c.classList.remove('correct', 'wrong'); c.removeAttribute('aria-label'); });
+      blanks.forEach(function(b){ b.classList.remove('missed'); b.removeAttribute('aria-label'); });
+    }
+    function place(card, blank){
+      var prev = blank.querySelector('.quiz-opt');
+      if (prev && prev !== card) pool.appendChild(prev);
+      blank.appendChild(card);
+      refresh(); clearColors();
+    }
+
+    cards.forEach(function(card){
+      noFocus(card);
+      card.addEventListener('pointerdown', stopP);
+      card.addEventListener('click', function(e){
+        e.stopPropagation(); e.preventDefault();
+        if (pickedBlank){
+          var b = pickedBlank; unpick(); place(card, b);
+        } else if (picked && picked !== card && inBlank(card)){
+          var target = card.parentNode, c = picked; unpick(); place(c, target);   // auf ein belegtes Feld gesetzt
+        } else if (picked === card){
+          unpick();
+        } else if (!picked && inBlank(card)){
+          pool.appendChild(card); refresh(); clearColors();                       // platziertes Wort zurücklegen
+        } else {
+          unpick(); picked = card; card.classList.add('picked'); highlight();
+        }
+        card.blur();
+      });
+    });
+    blanks.forEach(function(blank){
+      blank.addEventListener('pointerdown', stopP);
+      blank.addEventListener('click', function(e){
+        e.stopPropagation();
+        var inside = blank.querySelector('.quiz-opt');
+        if (picked){ var c = picked; unpick(); place(c, blank); }
+        else if (pickedBlank === blank){ unpick(); }
+        else if (inside){ pool.appendChild(inside); refresh(); clearColors(); }
+        else { unpick(); pickedBlank = blank; blank.classList.add('picked'); highlight(); }
+      });
+    });
+    pool.addEventListener('pointerdown', stopP);
+    pool.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (!picked) return;
+      var c = picked; unpick();
+      pool.appendChild(c); refresh(); clearColors();
+    });
+
+    function check(){
+      unpick(); clearColors();
+      quiz.classList.add('quiz-checked');
+      blanks.forEach(function(b, i){
+        var card = b.querySelector('.quiz-opt');
+        var soll = b.getAttribute('data-answer').trim();
+        if (!card){
+          b.classList.add('missed');
+          b.setAttribute('aria-label', 'Lücke ' + (i + 1) + ' – nicht ausgefüllt');
+        } else if (card.getAttribute('data-word') === soll){
+          card.classList.add('correct');
+          card.setAttribute('aria-label', soll + ' – richtig');
+        } else {
+          card.classList.add('wrong');
+          card.setAttribute('aria-label', card.getAttribute('data-word') + ' – falsch, richtig wäre ' + soll);
+        }
+      });
+    }
+    function reset(){
+      unpick(); clearColors();
+      shuffle(cards).forEach(function(card){ pool.appendChild(card); });
+      refresh();
+    }
+
+    var actions = document.createElement('div'); actions.className = 'quiz-actions';
+    var bCheck = document.createElement('button'); bCheck.type = 'button'; bCheck.textContent = o.checkLabel;
+    var bReset = document.createElement('button'); bReset.type = 'button'; bReset.className = 'ghost'; bReset.textContent = o.resetLabel;
+    noFocus(bCheck); noFocus(bReset);
+    bCheck.addEventListener('pointerdown', stopP); bReset.addEventListener('pointerdown', stopP);
+    bCheck.addEventListener('click', function(e){ e.stopPropagation(); check(); bCheck.blur(); });
+    bReset.addEventListener('click', function(e){ e.stopPropagation(); reset(); bReset.blur(); });
+    actions.appendChild(bCheck); actions.appendChild(bReset);
+    quiz.appendChild(actions);
+    wireReset(quiz, reset);
+    reset();
+    sizeBlanks();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(sizeBlanks);
+  }
+
   var Plugin = {
     id: 'quiz',
     init: function (deck) {
@@ -618,7 +836,8 @@
         multiple: function(q){ setupMultiple(q, o); },
         truefalse: function(q){ setupTrueFalse(q, o, sizers); },
         order: function(q){ setupOrder(q, o); },
-        match: function(q){ setupMatch(q, o); }
+        match: function(q){ setupMatch(q, o); },
+        'fill-blank': function(q){ setupFillBlank(q, o); }
       };
 
       var printMode = isPrintView(deck);
