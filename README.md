@@ -2,7 +2,7 @@
 
 [![reveal.js plugin](https://img.shields.io/badge/reveal.js-plugin-2C4A6E.svg)](https://revealjs.com) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Interactive exercises for [reveal.js](https://revealjs.com) — **single choice**, **multiple choice**, **true/false**, **ordering**, **matching** and **fill-in-the-blank**. One markup scheme, one `data-type` attribute per exercise. Built for teaching at the board: everything works with a finger on a touch display or smartboard, feedback is shown by colour alone (nothing shifts on the slide), and students can try the same exercises again at home. Standalone (ships its own CSS), colours and labels are easy to theme.
+Interactive exercises for [reveal.js](https://revealjs.com) — **single choice**, **multiple choice**, **true/false**, **ordering** and **matching**. One markup scheme, one `data-type` attribute per exercise. Built for teaching at the board: everything works with a finger on a touch display or smartboard, feedback is shown by colour alone (nothing shifts on the slide), and students can try the same exercises again at home. Standalone (ships its own CSS), colours and labels are easy to theme.
 
 **[Live demo](https://florianloyns.github.io/reveal.js-quiz/demo.html)**
 
@@ -131,20 +131,6 @@ Up to four columns sit side by side; the cards themselves wrap, so a set of a do
 </div>
 ```
 
-### Fill in the blanks
-
-Write the text and mark every gap with an empty `<span class="quiz-blank" data-answer="…">`. The word cards in the pool below are built from the answers; add wrong ones with `data-distractors="a|b"` on the `.quiz`. Each card is used once; a word that appears twice among the answers gets two cards.
-
-To fill, **tap a word** (it lifts and the gaps are outlined), then **tap a gap** — or tap the gap first, then the word. Tapping a placed word takes it back to the pool; dropping a word on an occupied gap sends the previous word back. **Check** grades: green = right word, red = wrong word, orange outline = gap left empty; the unused cards in the pool fade back. **Reset** reshuffles. Empty gaps show their number, so you can talk about "gap 2" at the board. The gaps are as wide as the longest word, so the text does not reflow while filling.
-
-```html
-<div class="quiz" data-type="fill-blank" data-distractors="Assistant|Doctor">
-  <div class="quiz-q">Complete the sentence, then Check.</div>
-  <p>The <span class="quiz-blank" data-answer="nurse"></span> assesses the care need
-     and <span class="quiz-blank" data-answer="evaluates"></span> the result.</p>
-</div>
-```
-
 ## Configuration
 
 All options are optional — for theming the colours and translating the labels.
@@ -172,10 +158,10 @@ Reveal.initialize({
 | `ok` | `'#639922'` | Correct answers |
 | `bad` | `'#D14A4A'` | Wrong answers |
 | `line` | `'#E7EBEF'` | Resting option border |
-| `checkLabel` | `'Prüfen'` | Label of the check button (multiple / order / match / fill-blank) |
+| `checkLabel` | `'Prüfen'` | Label of the check button (multiple / order / match) |
 | `trueLabel` | `'Wahr'` | True button label |
 | `falseLabel` | `'Falsch'` | False button label |
-| `resetLabel` | `'Zurücksetzen'` | Reset button label (order / match / fill-blank) |
+| `resetLabel` | `'Zurücksetzen'` | Reset button label (order / match) |
 | `tfHold` | `1200` | Milliseconds a true/false answer stays before the next fades in |
 
 The shipped labels are German, because that is where the plugin grew up. English, for example:
@@ -214,8 +200,6 @@ In print, sizes and colours are read from CSS custom properties. Set them once i
 ```
 
 ## Changelog
-
-**1.5.0** — New exercise type **`fill-blank`**: gaps in a text are filled by tapping words from a pool (with optional distractors). Prints with the solution in the text. All light tints (hover, selection, correct/wrong backgrounds, drop targets) are now derived from `accent`, `ok` and `bad`, so a custom colour scheme applies to every exercise type.
 
 **1.4.1** — Print detection unified across the plugin family: every print rule now applies both in the browser print dialog and in reveal’s `?print-pdf` view, so the on-screen preview looks like the PDF; the print view is recognised the same way everywhere (`?print-pdf` or `view: 'print'`).
 
