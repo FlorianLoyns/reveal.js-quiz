@@ -255,6 +255,8 @@ In print, sizes and colours are read from CSS custom properties. Set them once i
 
 ## Changelog
 
+**1.8.3** — Colours aligned with the plugin family: unit and scale labels of `estimate` use the family light grey `#9AA6B2` (was `#9AA8B4`). No visible change.
+
 **1.8.2** — Word cards in the fill-in-the-blank pool are at least as wide as the longest word, so cards and gaps line up.
 
 **1.8.1** — Fill-in-the-blank text can sit directly in `.quiz-q`; it is then set as running text with enough line height that gaps on two lines don’t touch.
