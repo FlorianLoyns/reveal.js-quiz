@@ -1,5 +1,5 @@
 /*!
- * reveal.js-quiz 1.8.2
+ * reveal.js-quiz 1.8.3
  * Interactive exercises for reveal.js — single choice, multiple choice,
  * true/false, ordering, matching, fill-in-the-blank and estimate. Touch / smartboard friendly, ships its own CSS,
  * colours and labels are easy to theme. Long-press a question to reset it.
@@ -154,7 +154,7 @@
     + ".reveal .quiz-est-row{display:flex;align-items:flex-end;gap:28px}"
     + ".reveal .quiz-est-val{display:flex;align-items:baseline;gap:14px;font-variant-numeric:tabular-nums}"
     + ".reveal .quiz-est-num{font-size:104px;font-weight:300;line-height:.95;letter-spacing:-.04em;color:#0B1818}"
-    + ".reveal .quiz-est-unit{font-size:20px;font-weight:400;color:#9AA8B4}"
+    + ".reveal .quiz-est-unit{font-size:20px;font-weight:400;color:#9AA6B2}"
     + ".reveal .quiz-est-pm{display:flex;gap:10px;margin-left:auto;padding-bottom:6px}"
     /* − / + wie Antwortkarten: 56 px, feiner Rahmen, runde Ecken */
     + ".reveal .quiz-est-btn{box-sizing:border-box;width:56px;height:56px;padding:0;margin:0;font-family:inherit;font-size:32px;font-weight:300;line-height:1;"
@@ -175,7 +175,7 @@
     + ".reveal .quiz-est-truth{display:none;position:absolute;top:13px;width:3px;height:34px;margin-left:-1.5px;border-radius:2px;background:" + o.ok + "}"
     + ".reveal .quiz-est-thumb{position:absolute;top:18px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:" + o.accent + ";box-shadow:0 0 0 3px #fff;"
       + "display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;transition:background .13s}"
-    + ".reveal .quiz-est-tick{position:absolute;top:46px;font-size:13px;color:#9AA8B4;white-space:nowrap}"
+    + ".reveal .quiz-est-tick{position:absolute;top:46px;font-size:13px;color:#9AA6B2;white-space:nowrap}"
     + ".reveal .quiz-est-tick.l{left:0}.reveal .quiz-est-tick.r{right:0}"
     + ".reveal .quiz-est.done .quiz-est-note{display:flex}"
     + ".reveal .quiz-est.done .quiz-est-pm{display:none}"
