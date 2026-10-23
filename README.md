@@ -2,7 +2,7 @@
 
 [![reveal.js plugin](https://img.shields.io/badge/reveal.js-plugin-2C4A6E.svg)](https://revealjs.com) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Interactive exercises for [reveal.js](https://revealjs.com) — **single choice**, **multiple choice**, **true/false**, **ordering** and **matching**. One markup scheme, one `data-type` attribute per exercise. Built for teaching at the board: everything works with a finger on a touch display or smartboard, feedback is shown by colour alone (nothing shifts on the slide), and students can try the same exercises again at home. Standalone (ships its own CSS), colours and labels are easy to theme.
+Interactive exercises for [reveal.js](https://revealjs.com) — **single choice**, **multiple choice**, **true/false**, **ordering**, **matching**, **fill-in-the-blank** and **estimate**. One markup scheme, one `data-type` attribute per exercise. Built for teaching at the board: everything works with a finger on a touch display or smartboard, feedback is shown by colour alone (nothing shifts on the slide), and students can try the same exercises again at home. Standalone (ships its own CSS), colours and labels are easy to theme.
 
 **[Live demo](https://florianloyns.github.io/reveal.js-quiz/demo.html)**
 
@@ -131,6 +131,43 @@ Up to four columns sit side by side; the cards themselves wrap, so a set of a do
 </div>
 ```
 
+### Fill in the blank
+
+Write the text and mark every gap with `<span class="quiz-blank" data-answer="word"></span>`. The word pool is built from the answers, plus optional wrong words in `data-distractors="a|b"` on the `.quiz`. **Tap a word**, then **tap a gap** (or the other way round); tapping a placed word puts it back. Empty gaps are numbered so you can talk about “gap 2” at the board. Gaps are as wide as the longest word, so nothing jumps when a word is dropped in. The text can sit in its own block or directly in `.quiz-q`.
+
+```html
+<div class="quiz" data-type="fill-blank" data-distractors="veins|lungs">
+  <div class="quiz-q">
+    The <span class="quiz-blank" data-answer="heart"></span> pumps blood through the
+    <span class="quiz-blank" data-answer="arteries"></span> into the body.
+  </div>
+</div>
+```
+
+### Estimate
+
+A number line for estimation questions. Tap or drag on the scale for a rough value, use **−** / **+** for single steps (hold to repeat, speeding up to tens). **Check** shows the true value on the line, the tolerance band, and whether the guess was too low, too high or a hit. The scale starts at its minimum (`data-start` changes that), so the middle can’t give the answer away.
+
+```html
+<div class="quiz" data-type="estimate"
+     data-min="0" data-max="200000" data-step="1000"
+     data-answer="100800" data-unit="beats" data-tolerance="10%">
+  <div class="quiz-q">How often does the heart beat in one day?</div>
+</div>
+```
+
+`data-tolerance` takes a percentage of the answer (`10%`) or an absolute value (`5000`); without it the global `estimateTolerance` applies.
+
+### Answer order and layout
+
+Single- and multiple-choice answers are **shuffled** every time the exercise is shown (and after a long-press reset), so nobody remembers “the third one” instead of the content. Answers that all start with a number are sorted ascending instead. `data-shuffle="false"` on the `.quiz` keeps the written order, `data-fixed` pins a single answer (e.g. “none of these”) in place. Print keeps the written order.
+
+Short answers (up to `tileMaxChars` characters, 2–8 answers) are shown as equal tiles in a grid, longer ones as a full-width list. Override per exercise with `data-layout="tiles"` or `data-layout="list"`.
+
+Exercises that are too tall for the slide are tightened automatically (spacing first, then scaled down to at most 75 %), leaving `bottomSpace` free for controls.
+
+Every result carries a ✓ / ✗ mark in addition to its colour, so feedback doesn’t rely on colour alone.
+
 ## Configuration
 
 All options are optional — for theming the colours and translating the labels.
@@ -146,7 +183,13 @@ Reveal.initialize({
     trueLabel:  'Wahr',
     falseLabel: 'Falsch',
     resetLabel: 'Zurücksetzen',
-    tfHold: 1200                 // ms a true/false answer stays before cross-fading
+    tfHold: 1200,                // ms a true/false answer stays before cross-fading
+    shuffle: true,               // shuffle single/multiple answers
+    align: 'left',               // 'left' | 'center'
+    tiles: true, tileMaxChars: 24,
+    fit: true, bottomSpace: 96,
+    locale: 'de-DE',             // number format for estimate
+    estimateTolerance: '10%'
   },
   plugins: [ RevealQuiz ]
 });
@@ -163,6 +206,17 @@ Reveal.initialize({
 | `falseLabel` | `'Falsch'` | False button label |
 | `resetLabel` | `'Zurücksetzen'` | Reset button label (order / match) |
 | `tfHold` | `1200` | Milliseconds a true/false answer stays before the next fades in |
+| `tfProgress` | `'Aussage {i} von {n}'` | Progress label for true/false sets; `false` hides it |
+| `shuffle` | `true` | Shuffle single/multiple answers on every show; `data-shuffle="false"` per exercise |
+| `align` | `'left'` | `'left'` (full width under the heading) or `'center'` |
+| `maxWidth` | `'none'` (`'880px'` when centred) | Maximum width of an exercise |
+| `tiles` | `true` | Show short answers as equal tiles |
+| `tileMaxChars` | `24` | Longest answer (characters) that still counts as short |
+| `fit` | `true` | Tighten exercises that are too tall for the slide |
+| `bottomSpace` | `96` | Space (px) kept free at the bottom for controls and arrows |
+| `locale` | `'de-DE'` | Number format of the estimate scale |
+| `estimateTolerance` | `'10%'` | Default tolerance for estimate (`'10%'` or an absolute number) |
+| `estimateLabels` | German | Texts of the estimate feedback: `off`, `low`, `high`, `hit`, `exact`, `truth`, `tolerance`, `solution` |
 
 The shipped labels are German, because that is where the plugin grew up. English, for example:
 
@@ -200,6 +254,20 @@ In print, sizes and colours are read from CSS custom properties. Set them once i
 ```
 
 ## Changelog
+
+**1.8.2** — Word cards in the fill-in-the-blank pool are at least as wide as the longest word, so cards and gaps line up.
+
+**1.8.1** — Fill-in-the-blank text can sit directly in `.quiz-q`; it is then set as running text with enough line height that gaps on two lines don’t touch.
+
+**1.5 – 1.8** (summary)
+
+- New exercise type **`fill-blank`**: drop words from a pool into gaps, with optional distractors and numbered empty gaps.
+- New exercise type **`estimate`**: number line with − / + steps, tolerance band (percent or absolute), “too low / too high / hit” feedback and the true value shown on the scale; printed with the solution.
+- Single/multiple answers are shuffled on every show (`shuffle`, `data-shuffle`, `data-fixed`); purely numeric answers are sorted instead.
+- Short answers as equal tiles (`tiles`, `tileMaxChars`, `data-layout`).
+- One card style for all exercise types; results marked with ✓ / ✗ in addition to colour; cards left in the pool recede instead of looking wrong.
+- Exercises that are too tall are fitted to the slide automatically (`fit`, `bottomSpace`).
+- New options `align`, `maxWidth`, `tfProgress`, `locale`, `estimateTolerance`, `estimateLabels`.
 
 **1.4.1** — Print detection unified across the plugin family: every print rule now applies both in the browser print dialog and in reveal’s `?print-pdf` view, so the on-screen preview looks like the PDF; the print view is recognised the same way everywhere (`?print-pdf` or `view: 'print'`).
 
