@@ -11,7 +11,7 @@
   .reveal .controls { color: #2C4A6E !important; }
   .reveal.has-dark-background .controls { color: #fff !important; }
   /* marine headings */
-  .reveal h1, .reveal h2, .reveal h3 { color: #2C4A6E; }
+  .reveal h1, .reveal h2, .reveal h3 { color: #2C4A6E; text-transform: none; }
   .reveal .lead { color: #6B7B7B; font-size: .7em; }
 </style>
 </head>
@@ -21,7 +21,7 @@
 
     <section>
       <h2>Quiz</h2>
-      <p class="lead">Five interactive exercise types for reveal.js — built for touch and smartboards.<br>Use the arrows to step through single choice, multiple choice, true/false, ordering and matching.</p>
+      <p class="lead">Seven interactive exercise types for reveal.js — built for touch and smartboards.<br>Use the arrows to step through single choice, multiple choice, true/false, ordering, matching, fill-in-the-blank and estimate.</p>
     </section>
 
     <section>
@@ -94,6 +94,27 @@
       </div>
     </section>
 
+    <section>
+      <h3>Fill in the blank</h3>
+      <p class="lead">Tap a word, then the gap it belongs in. Tap a placed word to put it back.</p>
+      <div class="quiz" data-type="fill-blank" data-distractors="veins|lungs">
+        <div class="quiz-q">
+          The <span class="quiz-blank" data-answer="heart"></span> pumps oxygen-rich blood through the
+          <span class="quiz-blank" data-answer="arteries"></span> into the body. In the
+          <span class="quiz-blank" data-answer="capillaries"></span> it gives off oxygen to the tissue.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>Estimate</h3>
+      <p class="lead">Tap or drag on the scale, fine-tune with − / +, then Check.</p>
+      <div class="quiz" data-type="estimate" data-min="0" data-max="200000" data-step="1000"
+           data-answer="100800" data-unit="beats" data-tolerance="10%">
+        <div class="quiz-q">How often does the heart beat in one day at rest?</div>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -108,7 +129,12 @@
   Reveal.initialize({
     hash: true,
     // the plugin ships German labels; this is how you translate them
-    quiz: { checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel: 'Reset' },
+    quiz: {
+      checkLabel: 'Check', trueLabel: 'True', falseLabel: 'False', resetLabel: 'Reset',
+      tfProgress: 'Statement {i} of {n}', locale: 'en-US',
+      estimateLabels: { off: 'off', low: 'too low', high: 'too high', hit: 'Hit', exact: 'Spot on',
+                        truth: 'actual', tolerance: 'tolerance', solution: 'Solution' }
+    },
     plugins: [ RevealQuiz ]
   });
 </script>
